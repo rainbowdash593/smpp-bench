@@ -1,0 +1,15 @@
+connection:
+  host: "127.0.0.1:2775"
+  login: foo
+  password: password
+  window_size: 20
+  bind_timout_ms: 3000
+
+message:
+  phone_country: RU
+  source: VIRTA
+  random: false
+  text: "hello world"
+
+logger:
+  level: debug
