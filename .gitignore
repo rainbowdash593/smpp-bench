@@ -24,3 +24,6 @@ vendor/
 
 # Default donfig file
 bench_config.yml
+
+# Log files
+*.log

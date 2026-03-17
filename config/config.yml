@@ -4,6 +4,7 @@ connection:
   password: password
   window_size: 20
   bind_timout_ms: 3000
+  bind_type: transceiver # transmitter, transceiver
 
 message:
   phone_country: RU
@@ -12,4 +13,13 @@ message:
   text: "hello world"
 
 logger:
+  enabled: true
+  filename: 'bench.log'
   level: debug
+
+benchmark:
+  initial_rps: 10
+  max_rps: 1000
+  factor: 1.5
+  burst_percentage: 0.1
+  output_tick_interval_ms: 3000

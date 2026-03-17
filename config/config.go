@@ -12,6 +12,7 @@ type (
 		Connection `yaml:"connection"`
 		Message    `yaml:"message"`
 		Log        `yaml:"logger"`
+		Benchmark  `yaml:"benchmark"`
 	}
 
 	// Connection -..
@@ -21,6 +22,7 @@ type (
 		Password      string `yaml:"password"`
 		WindowSize    uint   `yaml:"window_size"`
 		BindTimeoutMs int    `yaml:"bind_timout_ms"`
+		BindType      string `yaml:"bind_type"`
 	}
 
 	// Message -..
@@ -33,7 +35,17 @@ type (
 
 	// Log -..
 	Log struct {
-		Level string `yaml:"level"`
+		Enabled  bool   `yaml:"enabled"`
+		Filename string `yaml:"filename"`
+		Level    string `yaml:"level"`
+	}
+
+	Benchmark struct {
+		OutputTickIntervalMs int     `yaml:"output_tick_interval_ms"`
+		InitialRPS           int     `yaml:"initial_rps"`
+		MaxRPS               int     `yaml:"max_rps"`
+		Factor               float64 `yaml:"factor"`
+		BurstPercentage      float64 `yaml:"burst_percentage"`
 	}
 )
 

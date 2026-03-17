@@ -15,9 +15,15 @@ import (
 	"golang.org/x/time/rate"
 )
 
+type transmitter interface {
+	Bind() <-chan smpp.ConnStatus
+	Close() error
+	Submit(*smpp.ShortMessage) (*smpp.ShortMessage, error)
+}
+
 type Connection struct {
 	state     <-chan smpp.ConnStatus
-	trx       *smpp.Transceiver
+	tx        transmitter
 	stat      *statistics.Collector
 	semaphore chan struct{}
 }
@@ -27,15 +33,27 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 		stat:      collector,
 		semaphore: make(chan struct{}, cfg.Connection.WindowSize),
 	}
-	trx := &smpp.Transceiver{
-		Addr:        cfg.Connection.Host,
-		User:        cfg.Connection.Login,
-		Passwd:      cfg.Connection.Password,
-		WindowSize:  cfg.Connection.WindowSize,
-		Handler:     conn.receiveHandler,
-		RateLimiter: limiter,
+	var tx transmitter
+	if cfg.Connection.BindType == "transceiver" {
+		tx = &smpp.Transceiver{
+			Addr:        cfg.Connection.Host,
+			User:        cfg.Connection.Login,
+			Passwd:      cfg.Connection.Password,
+			WindowSize:  cfg.Connection.WindowSize,
+			Handler:     conn.receiveHandler,
+			RateLimiter: limiter,
+		}
+	} else {
+		tx = &smpp.Transmitter{
+			Addr:        cfg.Connection.Host,
+			User:        cfg.Connection.Login,
+			Passwd:      cfg.Connection.Password,
+			WindowSize:  cfg.Connection.WindowSize,
+			RateLimiter: limiter,
+		}
 	}
-	state := trx.Bind()
+
+	state := tx.Bind()
 	var status smpp.ConnStatus
 
 	select {
@@ -47,7 +65,7 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 		return nil, errors.New("timed out waiting for connection")
 	}
 
-	conn.trx = trx
+	conn.tx = tx
 	conn.state = state
 
 	return conn, nil
@@ -55,6 +73,7 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 
 func (c *Connection) receiveHandler(p pdu.Body) {
 	c.stat.RecordDLR()
+	time.Sleep(5 * time.Millisecond)
 	slog.Debug(fmt.Sprintf("read pdu: %s", utils.PDUToString(p)))
 }
 
@@ -71,7 +90,7 @@ func (c *Connection) Send(ctx context.Context, message *smpp.ShortMessage) error
 		defer func() { <-c.semaphore }()
 
 		start := time.Now()
-		sm, err := c.trx.Submit(message)
+		sm, err := c.tx.Submit(message)
 		latency := time.Since(start).Milliseconds()
 		if err != nil {
 			c.stat.RecordFailed(latency)
@@ -91,5 +110,5 @@ func (c *Connection) C() <-chan smpp.ConnStatus {
 }
 
 func (c *Connection) Close() error {
-	return c.trx.Close()
+	return c.tx.Close()
 }
