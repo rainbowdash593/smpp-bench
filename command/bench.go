@@ -71,7 +71,7 @@ func (c *RunCmd) Run() error {
 	}
 	total := benchmark.TotalStat()
 	tableData := pterm.TableData{
-		{"Sent", "Failed", "DLR", "Error Rate", "Avg Latency", "Window Size", "Max RPS"},
+		{"Sent", "Failed", "DLR", "Error Rate", "Avg Latency", "Window Size", "Avg RPS", "Max RPS"},
 		{
 			fmt.Sprintf("%d", total.Sent),
 			fmt.Sprintf("%d", total.Failed),
@@ -79,6 +79,7 @@ func (c *RunCmd) Run() error {
 			fmt.Sprintf("%.2f%%", total.ErrorRate),
 			fmt.Sprintf("%dms", total.SentLatencyMs),
 			fmt.Sprintf("%d", cfg.Connection.WindowSize),
+			fmt.Sprintf("%.1frq/s", total.AvgRPS),
 			fmt.Sprintf("%.1frq/s", total.MaxRPS),
 		},
 	}

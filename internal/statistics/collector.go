@@ -17,6 +17,7 @@ type Stats struct {
 
 type TotalStats struct {
 	Stats
+	AvgRPS float64
 	MaxRPS float64
 }
 type TickStats struct {
@@ -35,7 +36,8 @@ type Collector struct {
 	mu     sync.Mutex
 	maxRps float64
 
-	lastTick time.Time
+	startedAt time.Time
+	lastTick  time.Time
 
 	tickSent                 atomic.Int64
 	tickSentTotalLatencyMs   atomic.Int64
@@ -46,9 +48,13 @@ type Collector struct {
 
 func NewCollector() *Collector {
 	return &Collector{
-		mu:       sync.Mutex{},
-		lastTick: time.Now(),
+		mu: sync.Mutex{},
 	}
+}
+
+func (c *Collector) Start() {
+	c.startedAt = time.Now()
+	c.lastTick = c.startedAt
 }
 
 func (c *Collector) RecordSuccess(latency int64) {
@@ -149,6 +155,10 @@ func (c *Collector) Total() TotalStats {
 		errRate = float64(failed) / float64(total) * 100
 	}
 
+	now := time.Now()
+	elapsed := now.Sub(c.startedAt).Seconds()
+	avgRPS := float64(sent) / elapsed
+
 	return TotalStats{
 		Stats: Stats{
 			Sent:            sent,
@@ -158,6 +168,7 @@ func (c *Collector) Total() TotalStats {
 			ErrorRate:       errRate,
 			DLR:             dlr,
 		},
+		AvgRPS: avgRPS,
 		MaxRPS: c.maxRps,
 	}
 }

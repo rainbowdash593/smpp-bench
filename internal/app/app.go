@@ -64,6 +64,7 @@ func (a *App) Run(ctx context.Context) <-chan smpp.ConnStatus {
 	pterm.DefaultSection.WithLevel(2).Println("Running benchmark")
 
 	go func() {
+		a.collector.Start()
 		for {
 			select {
 			case <-ctx.Done():
