@@ -17,12 +17,13 @@ type (
 
 	// Connection -..
 	Connection struct {
-		Host          string `yaml:"host"`
-		Login         string `yaml:"login"`
-		Password      string `yaml:"password"`
-		WindowSize    uint   `yaml:"window_size"`
-		BindTimeoutMs int    `yaml:"bind_timout_ms"`
-		BindType      string `yaml:"bind_type"`
+		Host              string `yaml:"host"`
+		Login             string `yaml:"login"`
+		Password          string `yaml:"password"`
+		WindowSize        uint   `yaml:"window_size"`
+		BindTimeoutMs     int    `yaml:"bind_timout_ms"`
+		BindType          string `yaml:"bind_type"`
+		ResponseTimeoutMs int    `yaml:"response_timeout_ms"`
 	}
 
 	// Message -..

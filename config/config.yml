@@ -2,9 +2,10 @@ connection:
   host: "127.0.0.1:2775"
   login: foo
   password: password
-  window_size: 20
   bind_timout_ms: 3000
-  bind_type: transceiver # transmitter, transceiver
+  bind_type: transmitter # transmitter, transceiver
+  window_size: 20
+  response_timeout_ms: 10000
 
 message:
   phone_country: RU

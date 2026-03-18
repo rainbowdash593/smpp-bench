@@ -69,13 +69,11 @@ func (a *App) Run(ctx context.Context) <-chan smpp.ConnStatus {
 			case <-ctx.Done():
 				return
 			default:
-				if err := a.conn.Send(ctx, &smpp.ShortMessage{
+				a.conn.Send(ctx, &smpp.ShortMessage{
 					Src:  a.cfg.Message.Source,
 					Dst:  utils.GeneratePhone(a.cfg.Message.PhoneCountry),
 					Text: pdutext.Raw(a.cfg.Message.Text),
-				}); err != nil {
-					slog.Error(fmt.Sprintf("send short message: %v", err))
-				}
+				})
 			}
 		}
 	}()

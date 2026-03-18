@@ -42,6 +42,7 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 			User:        cfg.Connection.Login,
 			Passwd:      cfg.Connection.Password,
 			WindowSize:  cfg.Connection.WindowSize,
+			RespTimeout: time.Duration(cfg.Connection.ResponseTimeoutMs) * time.Millisecond,
 			Handler:     conn.receiveHandler,
 			RateLimiter: limiter,
 		}
@@ -52,6 +53,7 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 			User:        cfg.Connection.Login,
 			Passwd:      cfg.Connection.Password,
 			WindowSize:  cfg.Connection.WindowSize,
+			RespTimeout: time.Duration(cfg.Connection.ResponseTimeoutMs) * time.Millisecond,
 			RateLimiter: limiter,
 		}
 		rx := &smpp.Receiver{
@@ -87,13 +89,11 @@ func (c *Connection) receiveHandler(p pdu.Body) {
 	slog.Debug(fmt.Sprintf("read pdu: %s", utils.PDUToString(p)))
 }
 
-func (c *Connection) Send(ctx context.Context, message *smpp.ShortMessage) error {
-	done := make(chan error)
-
+func (c *Connection) Send(ctx context.Context, message *smpp.ShortMessage) {
 	select {
 	case c.semaphore <- struct{}{}:
 	case <-ctx.Done():
-		return ctx.Err()
+		return
 	}
 
 	go func() {
@@ -104,15 +104,14 @@ func (c *Connection) Send(ctx context.Context, message *smpp.ShortMessage) error
 		latency := time.Since(start).Milliseconds()
 		if err != nil {
 			c.stat.RecordFailed(latency)
-			done <- err
+			slog.Error(fmt.Sprintf("send short message: %v", err))
 			return
 		}
 		c.stat.RecordSuccess(latency)
 		slog.Debug("sent message", slog.String("rid", sm.RespID()))
-		done <- nil
 	}()
 
-	return <-done
+	return
 }
 
 func (c *Connection) C() <-chan smpp.ConnStatus {
