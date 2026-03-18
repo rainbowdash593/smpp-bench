@@ -14,7 +14,7 @@ message:
   text: "hello world"
 
 logger:
-  enabled: true
+  enabled: false
   filename: 'bench.log'
   level: debug
 
