@@ -146,7 +146,7 @@ func (c *Collector) Total() TotalStats {
 	}
 	total := sent + failed
 	if total > 0 {
-		errRate = float64(sent) / float64(total) * 100
+		errRate = float64(failed) / float64(total) * 100
 	}
 
 	return TotalStats{

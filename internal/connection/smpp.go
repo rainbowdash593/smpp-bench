@@ -34,6 +34,8 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 		semaphore: make(chan struct{}, cfg.Connection.WindowSize),
 	}
 	var tx transmitter
+	var txState <-chan smpp.ConnStatus
+
 	if cfg.Connection.BindType == "transceiver" {
 		tx = &smpp.Transceiver{
 			Addr:        cfg.Connection.Host,
@@ -43,6 +45,7 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 			Handler:     conn.receiveHandler,
 			RateLimiter: limiter,
 		}
+		txState = tx.Bind()
 	} else {
 		tx = &smpp.Transmitter{
 			Addr:        cfg.Connection.Host,
@@ -51,13 +54,20 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 			WindowSize:  cfg.Connection.WindowSize,
 			RateLimiter: limiter,
 		}
+		rx := &smpp.Receiver{
+			Addr:    cfg.Connection.Host,
+			User:    cfg.Connection.Login,
+			Passwd:  cfg.Connection.Password,
+			Handler: conn.receiveHandler,
+		}
+		txState = tx.Bind()
+		_ = rx.Bind()
 	}
 
-	state := tx.Bind()
 	var status smpp.ConnStatus
 
 	select {
-	case status = <-state:
+	case status = <-txState:
 		if status.Error() != nil {
 			return nil, fmt.Errorf("unable to connect: %v", status.Error())
 		}
@@ -66,7 +76,7 @@ func New(cfg *config.Config, limiter *rate.Limiter, collector *statistics.Collec
 	}
 
 	conn.tx = tx
-	conn.state = state
+	conn.state = txState
 
 	return conn, nil
 }

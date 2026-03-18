@@ -70,9 +70,9 @@ func (a *App) Run(ctx context.Context) <-chan smpp.ConnStatus {
 				return
 			default:
 				if err := a.conn.Send(ctx, &smpp.ShortMessage{
-					Src:  "VIRTA",
-					Dst:  utils.GeneratePhone("RU"),
-					Text: pdutext.Raw("Hello benchmark!"),
+					Src:  a.cfg.Message.Source,
+					Dst:  utils.GeneratePhone(a.cfg.Message.PhoneCountry),
+					Text: pdutext.Raw(a.cfg.Message.Text),
 				}); err != nil {
 					slog.Error(fmt.Sprintf("send short message: %v", err))
 				}
